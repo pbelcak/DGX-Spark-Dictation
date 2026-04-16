@@ -1,0 +1,20 @@
+#!/bin/bash
+# Sparktate daemon launcher with logging
+
+SPARKTATE_DIR="/home/pbelcak/Desktop/sparktate"
+LOG_DIR="$SPARKTATE_DIR/logs"
+VENV="$SPARKTATE_DIR/.venv"
+
+# Create log directory if needed
+mkdir -p "$LOG_DIR"
+
+# Log file with timestamp
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+LOG_FILE="$LOG_DIR/sparktate_$TIMESTAMP.log"
+
+# Kill any existing sparktate daemon
+pkill -f "sparktate daemon" 2>/dev/null
+
+# Activate venv and run daemon
+source "$VENV/bin/activate"
+exec sparktate daemon >> "$LOG_FILE" 2>&1
