@@ -1,7 +1,9 @@
 #!/bin/bash
 # Sparktate daemon launcher with logging
 
-SPARKTATE_DIR="/home/pbelcak/Desktop/sparktate"
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SPARKTATE_DIR="$SCRIPT_DIR"
 LOG_DIR="$SPARKTATE_DIR/logs"
 VENV="$SPARKTATE_DIR/.venv"
 
