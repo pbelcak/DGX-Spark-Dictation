@@ -115,30 +115,23 @@ pip install -e .
 ### Quick Start
 
 ```bash
-sparktate daemon
+sparktate
 ```
 
 Then press **Right Alt**, speak, and press **Right Alt** again.
 
 ### Auto-start on Login
 
-Create the launcher script:
+A launcher script is included in the repo:
 
 ```bash
-cat > ~/sparktate-daemon.sh << 'EOF'
-#!/bin/bash
-SPARKTATE_DIR="$HOME/DGX-Spark-Dictation"
-LOG_DIR="$SPARKTATE_DIR/logs"
-VENV="$SPARKTATE_DIR/.venv"
+./sparktate-daemon.sh
+```
 
-mkdir -p "$LOG_DIR"
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-LOG_FILE="$LOG_DIR/sparktate_$TIMESTAMP.log"
+Or copy it to your home directory for systemd:
 
-pkill -f "sparktate daemon" 2>/dev/null
-source "$VENV/bin/activate"
-exec sparktate daemon >> "$LOG_FILE" 2>&1
-EOF
+```bash
+cp sparktate-daemon.sh ~/sparktate-daemon.sh
 chmod +x ~/sparktate-daemon.sh
 ```
 
@@ -172,7 +165,7 @@ systemctl --user start sparktate.service
 ### Options
 
 ```
-sparktate daemon --help
+sparktate --help
 
 Options:
   -m, --model TEXT      ASR model (default: nvidia/parakeet-tdt_ctc-1.1b)

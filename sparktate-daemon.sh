@@ -15,8 +15,8 @@ TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 LOG_FILE="$LOG_DIR/sparktate_$TIMESTAMP.log"
 
 # Kill any existing sparktate daemon
-pkill -f "sparktate daemon" 2>/dev/null
+pkill -f "bin/sparktate" 2>/dev/null
 
 # Activate venv and run daemon
 source "$VENV/bin/activate"
-exec sparktate daemon >> "$LOG_FILE" 2>&1
+exec sparktate >> "$LOG_FILE" 2>&1

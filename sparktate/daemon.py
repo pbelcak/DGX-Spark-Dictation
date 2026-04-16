@@ -102,7 +102,7 @@ class TranscriptionDaemon:
     def _start_recording(self) -> None:
         """Start audio recording."""
         self._set_state(State.RECORDING, "Recording started...")
-        self._notify("Recording", "Speak now. Press Right Alt to finish.", "low")
+        self._notify("Listening...", "Speak now. Press Right Alt to finish.", "normal")
 
         # Start audio capture
         self._audio = AudioCapture(update_interval=1.0, device=self.audio_device)
