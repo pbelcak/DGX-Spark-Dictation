@@ -25,8 +25,8 @@ class TranscriptionDaemon:
     """
     Background daemon that listens for hotkeys to control transcription.
 
-    - Press trigger key (default: Right Alt) to start recording
-    - Press trigger key again to stop and copy transcription to clipboard
+    - Press trigger key to start recording
+    - Press trigger key again to stop and paste transcription
     - Press Escape to cancel recording without transcribing
     """
 
@@ -56,14 +56,26 @@ class TranscriptionDaemon:
         self.audio_device = audio_device
         self.on_state_change = on_state_change or self._default_state_handler
         self._notify_enabled = notify
+        self._trigger_name = self._get_key_name(trigger_key)
 
         self._state = State.IDLE
         self._transcriber: Transcriber | None = None
         self._audio: AudioCapture | None = None
         self._listener: keyboard.Listener | None = None
-        self._keyboard = Controller()  # For simulating paste
+        self._keyboard = Controller()
         self._running = False
         self._lock = threading.Lock()
+
+    def _get_key_name(self, key: keyboard.Key) -> str:
+        """Get human-readable name for a key."""
+        name = key.name if hasattr(key, 'name') else str(key)
+        # Convert alt_r -> Right Alt, f12 -> F12, etc.
+        if '_' in name:
+            parts = name.split('_')
+            if parts[1] in ('r', 'l'):
+                side = 'Right' if parts[1] == 'r' else 'Left'
+                return f"{side} {parts[0].title()}"
+        return name.upper()
 
     def _default_state_handler(self, state: State, message: str) -> None:
         """Default state change handler - prints to console."""
@@ -102,10 +114,9 @@ class TranscriptionDaemon:
     def _start_recording(self) -> None:
         """Start audio recording."""
         self._set_state(State.RECORDING, "Recording started...")
-        self._notify("Listening...", "Speak now. Press Right Alt to finish.", "normal")
+        self._notify("Listening...", f"Speak now. Press {self._trigger_name} to finish.", "normal")
 
-        # Start audio capture
-        self._audio = AudioCapture(update_interval=1.0, device=self.audio_device)
+        self._audio = AudioCapture(device=self.audio_device)
         self._audio.start()
 
     def _stop_and_transcribe(self) -> None:
@@ -116,11 +127,9 @@ class TranscriptionDaemon:
         self._set_state(State.TRANSCRIBING, "Transcribing...")
         self._notify("Transcribing", "Please wait...", "low")
 
-        # Get all audio
         all_audio = self._audio.get_all_audio()
         duration = self._audio.get_duration()
 
-        # Stop audio capture
         self._audio.stop()
         self._audio = None
 
@@ -129,13 +138,12 @@ class TranscriptionDaemon:
             self._notify("Cancelled", "Recording too short", "normal")
             return
 
-        # Transcribe in background to not block keyboard listener
         def do_transcribe():
             try:
                 text = self._transcriber.transcribe(all_audio)
                 if text.strip():
                     pyperclip.copy(text)
-                    self._paste()  # Auto-paste into active application
+                    self._paste()
                     self._set_state(State.IDLE, f"Pasted: {text[:50]}{'...' if len(text) > 50 else ''}")
                     self._notify("Transcribed & Pasted", text[:100], "normal")
                 else:
@@ -177,10 +185,9 @@ class TranscriptionDaemon:
             return
 
         self._running = True
-        self._set_state(State.IDLE, "Daemon started. Press Right Alt to record.")
-        self._notify("Sparktate Ready", "Press Right Alt to start recording", "normal")
+        self._set_state(State.IDLE, f"Daemon started. Press {self._trigger_name} to record.")
+        self._notify("Sparktate Ready", f"Press {self._trigger_name} to start recording", "normal")
 
-        # Start keyboard listener
         self._listener = keyboard.Listener(on_press=self._on_key_press)
         self._listener.start()
 
@@ -209,11 +216,6 @@ class TranscriptionDaemon:
         finally:
             self.stop()
 
-    @property
-    def state(self) -> State:
-        """Get current state."""
-        return self._state
-
 
 def run_daemon(
     model: str | None = None,
@@ -232,7 +234,6 @@ def run_daemon(
         verbose: Print status messages
         notify: Show desktop notifications
     """
-    # Map key names to pynput keys
     key_map = {
         "alt_r": keyboard.Key.alt_r,
         "alt_l": keyboard.Key.alt_l,
